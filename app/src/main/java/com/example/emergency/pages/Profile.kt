@@ -1,5 +1,6 @@
 package com.example.emergency.pages
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,34 +14,47 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.emergency.MainViewModel
 import com.example.emergency.models.User
 
 @Composable
 fun Profile(
     modifier: Modifier = Modifier,
-    user: User
+    user: User?,
+    mvm: MainViewModel
 ) {
-    Scaffold(modifier = modifier.fillMaxSize()) {
-        innerPadding ->
+    Log.e("user", user.toString())
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
 
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Name: ${user.name}")
+                if (user != null) {
+                    Text(text = "Name: ${user.name}")
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row {
-                Text(text = "Surname: ${user.surname}")
+                if (user != null) {
+                    Text(text = "Surname: ${user.surname}")
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Row {
-                Text(text = "Email: ${user.email}")
+                if (user != null) {
+                    Text(text = "Email: ${user.email}")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row {
+                Text(text = "${mvm._location.latitude} ${mvm._location.longitude}")
             }
         }
-
     }
 }

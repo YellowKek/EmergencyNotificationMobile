@@ -1,5 +1,6 @@
 package com.example.emergency.pages
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,12 +24,22 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.emergency.models.EmergencyRequest
+import com.example.emergency.models.User
 import com.example.emergency.navigation.Page
+import com.example.emergency.util.ApiService
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun Main(
     modifier: Modifier = Modifier,
     navController: NavController,
+    apiService: ApiService,
+    user: User,
+
 ) {
     Scaffold(modifier = modifier, topBar = {
         Box(
@@ -67,7 +78,24 @@ fun Main(
                     .clip(CircleShape),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 onClick = {
-                    // TODO: Implement navigation or action
+                    var body = EmergencyRequest(
+                        userId = user.id
+                    )
+                    Log.e("debug", user.toString())
+                    Log.e("api help", "userID " + body.userId.toString())
+                    apiService.callEmergency(body).enqueue( object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            Log.e("api help", "response " + response.body().toString())
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Log.e("api help", "failure " + t.toString())
+                        }
+                    })
+
                 }
             ) {
                 Text(

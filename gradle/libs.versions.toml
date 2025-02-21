@@ -12,6 +12,7 @@ playServicesLocation = "21.3.0"
 navigationRuntimeKtx = "2.8.7"
 navigationCompose = "2.8.7"
 espressoWeb = "3.6.1"
+roomKtx = "2.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-espresso-web = { group = "androidx.test.espresso", name = "espresso-web", version.ref = "espressoWeb" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
