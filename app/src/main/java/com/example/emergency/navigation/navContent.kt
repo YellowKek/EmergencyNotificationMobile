@@ -18,7 +18,9 @@ fun NavContent(
     navController: NavHostController,
     user: User,
     mvm: MainViewModel,
-    apiService: ApiService
+    apiService: ApiService,
+    emergencyGroup: Map<String, String>,
+
     ) {
     NavHost(
         navController = navController,
@@ -31,15 +33,19 @@ fun NavContent(
                 navController = navController,
                 apiService = apiService,
                 user = user,
+                mvm = mvm,
 
             )
         }
 
         composable(Page.PROFILE.route) {
-            var user = mvm.getUser()
+            val userFromFile = mvm.getUser()
             Profile(
-                user = user,
+                user = userFromFile,
                 mvm = mvm,
+                apiService = apiService,
+                emergencyGroup = emergencyGroup,
+
             )
         }
 
@@ -48,7 +54,7 @@ fun NavContent(
                 navController = navController,
                 user = user,
                 mvm = mvm,
-                apiService = apiService
+                apiService = apiService,
 
             )
         }

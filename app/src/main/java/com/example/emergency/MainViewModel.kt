@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import com.google.android.gms.location.LocationServices
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import android.os.Looper
 import android.util.Log
@@ -17,12 +18,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
+import java.util.Locale
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val applicationContext = application.applicationContext
     private val fusedLocationClient =
         LocationServices.getFusedLocationProviderClient(applicationContext)
-    lateinit var _location: Location
+    private lateinit var _location: Location
 
     private fun getAuthFromFile(): Boolean {
         return try {
@@ -46,18 +49,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         file.writeText("true")
         val gson = Gson()
         val json = gson.toJson(user)
-        var userFile = File(applicationContext.filesDir, "user.json")
+        val userFile = File(applicationContext.filesDir, "user.json")
         userFile.writeText(json)
     }
 
-    fun getUser(): User? {
+    fun getUser(): User {
         val userFile = File(applicationContext.filesDir, "user.json")
         return if (userFile.exists()) {
             val json = userFile.readText()
             val gson = Gson()
             gson.fromJson(json, User::class.java)
         } else {
-            null
+            User()
         }
     }
 
@@ -100,7 +103,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-//    private suspend fun createUser() {
-//
-//    }
+    fun updateLocation(callback: (Location?) -> Unit) {
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            callback(null)
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnCompleteListener { task ->
+            if (task.isSuccessful && task.result != null) {
+                _location = task.result
+                callback(_location)
+            } else {
+                callback(null)
+            }
+        }
+    }
+
+    fun getAddressFromLocation(): String? {
+        val geocoder = Geocoder(applicationContext, Locale.getDefault())
+        return try {
+            val addresses = geocoder.getFromLocation(_location.latitude, _location.longitude, 1)
+            if (addresses?.isNotEmpty() == true) {
+                val address = addresses[0]
+                val addressText = StringBuilder().apply {
+                    for (i in 0..address.maxAddressLineIndex) {
+                        append(address.getAddressLine(i)).append(", ")
+                    }
+                }.toString()
+                addressText.removeSuffix(", ")
+            } else {
+                null
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

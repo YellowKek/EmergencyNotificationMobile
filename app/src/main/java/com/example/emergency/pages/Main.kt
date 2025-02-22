@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.emergency.MainViewModel
 import com.example.emergency.models.EmergencyRequest
 import com.example.emergency.models.User
 import com.example.emergency.navigation.Page
@@ -39,24 +40,11 @@ fun Main(
     navController: NavController,
     apiService: ApiService,
     user: User,
-
+    mvm: MainViewModel
 ) {
     Scaffold(modifier = modifier, topBar = {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp, 30.dp, 0.dp, 0.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Service for notifying",
-                fontSize = 20.sp,
-                fontFamily = FontFamily.SansSerif,
-                color = Color.White,
-            )
-        }
+        Header()
     }) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -72,39 +60,11 @@ fun Main(
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-            Button(
-                modifier = Modifier
-                    .size(300.dp)
-                    .clip(CircleShape),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                onClick = {
-                    var body = EmergencyRequest(
-                        userId = user.id
-                    )
-                    Log.e("debug", user.toString())
-                    Log.e("api help", "userID " + body.userId.toString())
-                    apiService.callEmergency(body).enqueue( object : Callback<ResponseBody> {
-                        override fun onResponse(
-                            call: Call<ResponseBody>,
-                            response: Response<ResponseBody>
-                        ) {
-                            Log.e("api help", "response " + response.body().toString())
-                        }
-
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            Log.e("api help", "failure " + t.toString())
-                        }
-                    })
-
-                }
-            ) {
-                Text(
-                    text = "HELP",
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            HelpButton(
+                user = user,
+                mvm = mvm,
+                apiService = apiService
+            )
         }
     }
 }
@@ -124,6 +84,71 @@ fun ProfileButton(onClick: () -> Unit) {
             imageVector = Icons.Filled.Person,
             contentDescription = "Profile Icon",
             tint = Color.White,
+        )
+    }
+}
+
+@Composable
+fun Header() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(0.dp, 30.dp, 0.dp, 0.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Service for notifying",
+            fontSize = 20.sp,
+            fontFamily = FontFamily.SansSerif,
+            color = Color.White,
+        )
+    }
+}
+
+@Composable
+fun HelpButton(
+    user: User,
+    mvm: MainViewModel,
+    apiService: ApiService,
+
+    ) {
+    Button(
+        modifier = Modifier
+            .size(300.dp)
+            .clip(CircleShape),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+        onClick = {
+            mvm.updateLocation { location ->
+                if (location != null) {
+                    val body = EmergencyRequest(
+                        userId = user.id,
+                    )
+                    Log.e("debug", user.toString())
+                    Log.e("api help", "userID " + body.userId.toString())
+
+                    apiService.callEmergency(body).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(
+                            call: Call<ResponseBody>,
+                            response: Response<ResponseBody>
+                        ) {
+                            Log.e("api help", "response " + response.body().toString())
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Log.e("api help", "failure $t")
+                        }
+                    })
+                } else {
+                    Log.e("api help", "Failed to get location")
+                }
+            }
+        }
+    ) {
+        Text(
+            text = "HELP",
+            color = Color.White,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
