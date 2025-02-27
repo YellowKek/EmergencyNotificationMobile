@@ -35,8 +35,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var requester: ActivityResultLauncher<Array<String>>
     private val mvm: MainViewModel by viewModels<MainViewModel>()
     private var user: User = User()
+
+    private val retrofit: Retrofit = Retrofit.Builder().baseUrl("http://192.168.31.34:8081/")
+        .addConverterFactory(GsonConverterFactory.create()).build()
+    private val apiService: ApiService = retrofit.create(ApiService::class.java)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         requester = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -64,11 +70,6 @@ class MainActivity : ComponentActivity() {
                     val isAuthenticated = mvm.getAuth()
                     user = mvm.getUser()
 
-                    val retrofit = Retrofit.Builder().baseUrl("http://192.168.31.98:8081/")
-                        .addConverterFactory(GsonConverterFactory.create()).build()
-                    val apiService = retrofit.create(ApiService::class.java)
-
-                    var emergencyGroup: MutableMap<String, String> = HashMap()
 
                     LaunchedEffect(isAuthenticated) {
                         if (isAuthenticated) {
@@ -81,44 +82,44 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                    loadEmergencyGroups(user.id)
 
-
-                    var error: String? = null
-                    user.let {
-                        apiService.getGroups(it.id).enqueue(object : Callback<ResponseBody> {
-                            override fun onResponse(
-                                call: Call<ResponseBody>,
-                                response: Response<ResponseBody>
-                            ) {
-                                if (response.isSuccessful) {
-                                    val jsonString = response.body()?.string()
-
-                                    if (!jsonString.isNullOrEmpty()) {
-                                        Log.e("api get group", "success")
-                                        val gson = Gson()
-                                        emergencyGroup = gson.fromJson(jsonString, object : TypeToken<MutableMap<String, String>>() {}.type)
-                                    } else {
-                                        error = jsonString
-                                        Log.e("api get groups", "jsonString is null or empty")
-                                    }
-                                } else {
-                                    Log.e("api get groups", "Response not successful: ${response.code()}")
-                                }
-                            }
-
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                Log.e("api get group", t.toString())
-                            }
-                        })
-                    }
-
-                    val context = LocalContext.current
-
-                    if (!error.isNullOrEmpty()) {
-                        LaunchedEffect(Unit) {
-                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
-                        }
-                    }
+//                    var error: String? = null
+//                    user.let {
+//                        apiService.getGroups(it.id).enqueue(object : Callback<Map<String, String>> {
+//                            override fun onResponse(
+//                                call: Call<ResponseBody>,
+//                                response: Response<Map<String, String>>
+//                            ) {
+//                                if (response.isSuccessful) {
+//                                    val jsonString = response.body()?.string()
+//
+//                                    if (!jsonString.isNullOrEmpty()) {
+//                                        Log.e("api get group", "success")
+//                                        mvm.updateEmergencyGroup(response.body() ?: emptyMap())
+//                                    } else {
+//                                        error = jsonString
+//                                        Log.e("api get groups", "jsonString is null or empty")
+//                                    }
+//                                } else {
+//                                    Log.e(
+//                                        "api get groups",
+//                                        "Response not successful: ${response.code()}"
+//                                    )
+//                                }
+//                            }
+//
+//                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+//                                Log.e("api get group", t.toString())
+//                            }
+//                        })
+//                    }
+//
+//                    val context = LocalContext.current
+//
+//                    if (!error.isNullOrEmpty()) {
+//                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+//                    }
 
 
                     NavContent(
@@ -126,11 +127,31 @@ class MainActivity : ComponentActivity() {
                         mvm = mvm,
                         user = user,
                         apiService = apiService,
-                        emergencyGroup = emergencyGroup,
-
-                    )
+                        )
                 }
             }
         }
     }
+
+    private fun loadEmergencyGroups(userId: Int) {
+        apiService.getGroups(userId).enqueue(object : Callback<Map<String, String>> {
+            override fun onResponse(
+                call: Call<Map<String, String>>,
+                response: Response<Map<String, String>>
+            ) {
+                if (response.isSuccessful) {
+                    val emergencyGroups = response.body() ?: emptyMap()
+                    mvm.updateEmergencyGroup(emergencyGroups)
+                } else {
+                    Log.e("API", "Failed to load emergency groups: ${response.errorBody()}")
+                }
+            }
+
+            override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                Log.e("API", "Failed to load emergency groups: ${t.message}")
+            }
+        })
+    }
+
 }
+

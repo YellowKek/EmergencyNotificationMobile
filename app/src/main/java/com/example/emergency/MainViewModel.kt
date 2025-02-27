@@ -15,6 +15,8 @@ import com.example.emergency.locating.Locator
 import com.example.emergency.models.User
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -26,6 +28,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val fusedLocationClient =
         LocationServices.getFusedLocationProviderClient(applicationContext)
     private lateinit var _location: Location
+
+    private val _emergencyGroup = MutableStateFlow<Map<String, String>>(emptyMap())
+    val emergencyGroup: StateFlow<Map<String, String>> get() = _emergencyGroup
+
+    fun updateEmergencyGroup(newGroup: Map<String, String>) {
+        _emergencyGroup.value = newGroup
+    }
 
     private fun getAuthFromFile(): Boolean {
         return try {

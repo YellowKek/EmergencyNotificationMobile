@@ -1,6 +1,7 @@
 package com.example.emergency.pages
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,16 +20,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.emergency.MainViewModel
+import com.example.emergency.models.ApiError
 import com.example.emergency.models.EmergencyRequest
 import com.example.emergency.models.User
 import com.example.emergency.navigation.Page
 import com.example.emergency.util.ApiService
+import com.google.gson.Gson
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -112,6 +116,7 @@ fun HelpButton(
     apiService: ApiService,
 
     ) {
+    val context = LocalContext.current
     Button(
         modifier = Modifier
             .size(300.dp)
@@ -122,6 +127,7 @@ fun HelpButton(
                 if (location != null) {
                     val body = EmergencyRequest(
                         userId = user.id,
+                        location = mvm.getAddressFromLocation()!!
                     )
                     Log.e("debug", user.toString())
                     Log.e("api help", "userID " + body.userId.toString())
@@ -131,14 +137,19 @@ fun HelpButton(
                             call: Call<ResponseBody>,
                             response: Response<ResponseBody>
                         ) {
+                            val gson = Gson()
+                            val apiError = gson.fromJson(response.body()?.string(), ApiError::class.java)
+                            Toast.makeText(context, apiError.message, Toast.LENGTH_SHORT).show()
                             Log.e("api help", "response " + response.body().toString())
                         }
 
                         override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Toast.makeText(context, t.message, Toast.LENGTH_SHORT).show()
                             Log.e("api help", "failure $t")
                         }
                     })
                 } else {
+                    Toast.makeText(context, "Failed to get location", Toast.LENGTH_SHORT).show()
                     Log.e("api help", "Failed to get location")
                 }
             }

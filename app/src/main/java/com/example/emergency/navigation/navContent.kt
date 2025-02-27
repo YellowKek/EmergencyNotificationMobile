@@ -19,8 +19,6 @@ fun NavContent(
     user: User,
     mvm: MainViewModel,
     apiService: ApiService,
-    emergencyGroup: Map<String, String>,
-
     ) {
     NavHost(
         navController = navController,
@@ -44,8 +42,6 @@ fun NavContent(
                 user = userFromFile,
                 mvm = mvm,
                 apiService = apiService,
-                emergencyGroup = emergencyGroup,
-
             )
         }
 

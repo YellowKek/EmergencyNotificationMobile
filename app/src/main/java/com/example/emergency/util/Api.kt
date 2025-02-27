@@ -22,5 +22,5 @@ interface ApiService {
     fun addGroup(@Body body: AddGroupRequest): Call<ResponseBody>
 
     @GET("getGroups")
-    fun getGroups(@Query("user_id") userId: Int): Call<ResponseBody>
+    fun getGroups(@Query("user_id") userId: Int): Call<Map<String, String>>
 }

@@ -1,6 +1,7 @@
 package com.example.emergency.pages
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,11 +32,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.emergency.MainViewModel
 import com.example.emergency.models.AddGroupRequest
+import com.example.emergency.models.ApiError
 import com.example.emergency.models.User
 import com.example.emergency.util.ApiService
+import com.google.gson.Gson
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -46,11 +51,11 @@ fun Profile(
     user: User,
     mvm: MainViewModel,
     apiService: ApiService,
-    emergencyGroup: Map<String, String>,
 ) {
     var type by remember { mutableStateOf("") }
     var value by remember { mutableStateOf("") }
     val items = remember { mutableStateListOf<Pair<String, String>>() }
+    val emergencyGroup by mvm.emergencyGroup.collectAsState()
 
     LaunchedEffect(emergencyGroup) {
         if (emergencyGroup.isNotEmpty()) {
@@ -84,7 +89,7 @@ fun Profile(
                 type = type,
                 value = value,
                 onTypeChange = { type = it },
-                onValueChange = {value = it}
+                onValueChange = { value = it }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -96,7 +101,8 @@ fun Profile(
                 onValueChange = { value = it },
                 items = items,
                 user = user,
-                apiService = apiService
+                apiService = apiService,
+                mvm = mvm
             )
         }
     }
@@ -221,7 +227,9 @@ fun AddGroupButton(
     items: SnapshotStateList<Pair<String, String>>,
     user: User,
     apiService: ApiService,
+    mvm: MainViewModel // Add MainViewModel as parameter
 ) {
+    val context = LocalContext.current
     Button(
         onClick = {
             if (type.isNotBlank() && value.isNotBlank()) {
@@ -240,12 +248,23 @@ fun AddGroupButton(
                         ) {
                             if (response.isSuccessful) {
                                 Log.d("API", "Group added successfully")
+
+                                // Update emergencyGroup in MainViewModel
+                                val newGroup = items.associate { it.first to it.second }
+                                mvm.updateEmergencyGroup(newGroup)
                             } else {
+                                val gson = Gson()
+                                val apiError = gson.fromJson(
+                                    response.errorBody()?.string(),
+                                    ApiError::class.java
+                                )
+                                Toast.makeText(context, apiError.message, Toast.LENGTH_SHORT).show()
                                 Log.e("API", "Failed to add group: ${response.body()}")
                             }
                         }
 
                         override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Toast.makeText(context, t.message.toString(), Toast.LENGTH_SHORT).show()
                             Log.e("API", "Failed to add group: ${t.message}")
                         }
                     }
